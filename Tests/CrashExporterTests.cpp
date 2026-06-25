@@ -26,7 +26,7 @@ void CrashExporterTests::tearDown()
 }
 
 
-CppUnit::Test* CrashExporterTests::suite()
+	CppUnit::Test* CrashExporterTests::suite()
 {
 	CppUnit::TestSuite* pSuite = new CppUnit::TestSuite("CrashExporterTests");
 
@@ -35,8 +35,10 @@ CppUnit::Test* CrashExporterTests::suite()
 	CppUnit_addTest(pSuite, CrashExporterTests, Test_crInstall_wrong_cb);
 	CppUnit_addTest(pSuite, CrashExporterTests, Test_crInstallW_zero_info);
 	CppUnit_addTest(pSuite, CrashExporterTests, Test_crInstallA_zero_info);
+	CppUnit_addTest(pSuite, CrashExporterTests, Test_crInstallA_twice);
 	CppUnit_addTest(pSuite, CrashExporterTests, Test_crInstallToCurrentThread);
 	CppUnit_addTest(pSuite, CrashExporterTests, Test_crAddScreenshot);
+	CppUnit_addTest(pSuite, CrashExporterTests, Test_crGenerateErrorReport);
 	
 
 	return pSuite;
@@ -168,6 +170,35 @@ void CrashExporterTests::Test_crAddScreenshot()
 	// Call twice - should succeed
 	int nResult3 = crAddScreenshot(CR_AS_MAIN_WINDOW);
 	assert(nResult3 == 0);
+
+	// Uninstall
+	crUninstall();  
+}
+
+void CrashExporterTests::Test_crGenerateErrorReport()
+{   
+	// Should fail, because crInstall() should be called first
+	CR_EXCEPTION_INFO ei;
+	memset(&ei, 0, sizeof(CR_EXCEPTION_INFO));
+	ei.cb = sizeof(CR_EXCEPTION_INFO);
+	ei.exctype = CR_SEH_EXCEPTION;
+	ei.code = 1234;
+	ei.pexcptrs = NULL;
+
+	int nResult = crGenerateErrorReport(&ei);
+	assert(nResult != 0);
+
+	// Install crash handler
+	CR_INSTALL_INFOW infoW;
+	memset(&infoW, 0, sizeof(CR_INSTALL_INFOW));
+	infoW.cb = sizeof(CR_INSTALL_INFOW);
+
+	int nInstallResult = crInstallW(&infoW);
+	assert(nInstallResult == 0);
+
+	// Should succeed
+	int nResult2 = crGenerateErrorReport(&ei);
+	assert(nResult2 == 0);
 
 	// Uninstall
 	crUninstall();  
