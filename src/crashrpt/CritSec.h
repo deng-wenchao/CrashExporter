@@ -1,80 +1,70 @@
-
 /*! \file  CritSec.h
-*  \brief  Critical section wrapper classes. 
-	Code of CCritSec and CAutoLock classes is taken from DirectShow base classes and modified in some way.
+*  \brief  Critical section wrapper classes with RAII support
 */
 
 #ifndef _CRITSEC_H
 #define _CRITSEC_H
 
-/*!
-\class CCritSec 
-\brief
-	wrapper for whatever critical section we have
-*/
-class CCritSec 
+#include <windows.h>
+
+/**
+ * @class CCritSec
+ * @brief Wrapper for Windows critical section with RAII semantics
+ */
+class CCritSec
 {
 public:
-
-    CCritSec() 
+    CCritSec()
     {
         InitializeCriticalSection(&m_CritSec);
-    };
+    }
 
-    ~CCritSec() 
+    ~CCritSec()
     {
         DeleteCriticalSection(&m_CritSec);
     }
 
-    void Lock() 
+    void Lock()
     {
         EnterCriticalSection(&m_CritSec);
-    };
+    }
 
-    void Unlock() 
+    void Unlock()
     {
         LeaveCriticalSection(&m_CritSec);
-    };
+    }
 
-	// make copy constructor and assignment operator inaccessible
+    // Disable copy constructor and assignment operator
+    CCritSec(const CCritSec&) = delete;
+    CCritSec& operator=(const CCritSec&) = delete;
+
 private:
-	CCritSec(const CCritSec &refCritSec);
-	CCritSec &operator=(const CCritSec &refCritSec);
-
-	CRITICAL_SECTION m_CritSec;
+    CRITICAL_SECTION m_CritSec;
 };
 
-/*!
-\class CAutoLock 
-\brief
-	locks a critical section, and unlocks it automatically when the lock goes out of scope
-*/
-class CAutoLock 
+/**
+ * @class CAutoLock
+ * @brief RAII lock guard for critical sections
+ */
+class CAutoLock
 {
-
 public:
-    CAutoLock(__in CCritSec * plock)
+    explicit CAutoLock(CCritSec* plock) : m_pLock(plock)
     {
-        m_pLock = plock;
         m_pLock->Lock();
-    };
+    }
 
-    ~CAutoLock() 
+    ~CAutoLock()
     {
         m_pLock->Unlock();
-    };
+    }
 
-protected:
+    // Disable copy constructor and assignment operator
+    CAutoLock(const CAutoLock&) = delete;
+    CAutoLock& operator=(const CAutoLock&) = delete;
 
-	CCritSec * m_pLock;
-
-private:    
-
-	// make copy constructor and assignment operator inaccessible
-
-	CAutoLock(const CAutoLock &refAutoLock);
-	CAutoLock &operator=(const CAutoLock &refAutoLock);
+private:
+    CCritSec* m_pLock;
 };
 
-
-#endif  //_CRITSEC_H
+#endif // _CRITSEC_H

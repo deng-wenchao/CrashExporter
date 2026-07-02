@@ -1,82 +1,128 @@
-
 /*! \file  Utility.h
 *  \brief  Miscellaneous helper functions
 */
+
 #ifndef _UTILITY_H_
 #define _UTILITY_H_
 
-#include "stdafx.h"
+#include <windows.h>
+#include <atlstr.h>
+#include <cstdint>
 
-/*!
-\namespace Utility 
-\brief
-	The main class that collects crash report files. 
-*/
-namespace Utility  
+/**
+ * @namespace Utility
+ * @brief Collection of utility helper functions
+ */
+namespace Utility
 {
-	/*! Returns base name of the EXE file that launched current process. */
-	CString getAppName();
+    /**
+     * @brief Get base name of the EXE file for current process
+     * @return Application name without extension
+     */
+    CString getAppName();
 
-	/*! Returns path to directory where EXE or DLL module is located. */
-	CString GetModulePath(HMODULE hModule);
+    /**
+     * @brief Get path to directory containing the specified module
+     * @param hModule Module handle (NULL for current executable)
+     * @return Directory path
+     */
+    CString GetModulePath(HMODULE hModule);
 
-	/*! Returns the absolute path and name of the module */
-	CString GetModuleName(HMODULE hModule);
+    /**
+     * @brief Get full path and filename of the specified module
+     * @param hModule Module handle (NULL for current executable)
+     * @return Full module path
+     */
+    CString GetModuleName(HMODULE hModule);
 
-	/*! Generates unique identifier (GUID) */
-	int GenerateGUID(CString& sGUID);  
+    /**
+     * @brief Generate a unique identifier (GUID)
+     * @param sGUID Output string to receive GUID
+     * @return 0 on success
+     */
+    int GenerateGUID(CString& sGUID);
 
-	/*! Returns current system time as string. */
-	void GetSystemTime(CString& sTime); 
+    /**
+     * @brief Get current system time as formatted string
+     * @param sTime Output string to receive time
+     */
+    void GetSystemTime(CString& sTime);
 
-	/*! Returns friendly name of operating system (name, version, service pack) */
-	int GetOSFriendlyName(CString& sOSName);   
+    /**
+     * @brief Get friendly OS name including version and service pack
+     * @param sOSName Output string to receive OS name
+     * @return 0 on success
+     */
+    int GetOSFriendlyName(CString& sOSName);
 
-	/*! Returns TRUE if Windows is 64-bit */
-	BOOL IsOS64Bit();  
+    /**
+     * @brief Check if Windows is 64-bit
+     * @return TRUE if 64-bit OS
+     */
+    BOOL IsOS64Bit();
 
-	/*! Formats the error message. */
-	CString FormatErrorMsg(DWORD dwErrorCode);
+    /**
+     * @brief Format an error message from error code
+     * @param dwErrorCode Windows error code
+     * @return Formatted error message
+     */
+    CString FormatErrorMsg(DWORD dwErrorCode);
 
-	/*! Creates a folder. If some intermediate folders in the path do not exist,
-	 it creates them. */
-	BOOL CreateFolder(CString sFolderName);
+    /**
+     * @brief Create a folder and any necessary parent directories
+     * @param sFolderName Path to create
+     * @return TRUE on success
+     */
+    BOOL CreateFolder(const CString& sFolderName);
 
-	/*! Converts system time to UINT64 */
-	ULONG64 SystemTimeToULONG64( const SYSTEMTIME& st );
+    /**
+     * @brief Convert SYSTEMTIME to UINT64
+     * @param st System time structure
+     * @return Time as UINT64 value
+     */
+    ULONG64 SystemTimeToULONG64(const SYSTEMTIME& st);
 
-	/*!
-	\brief	    AppendString - Appends the specified source string to the specified destination
-				string. Allocates additional space so that the destination string "grows"
-				as new strings are appended to it. This is accomplished by deleting the
-				destination string after the new longer string is gets the copied contents
-				of the destination and additional text. This function is fairly infrequently
-				used so efficiency is not a major concern.
-	\param[in]  dest - Address of the destination string. Receives the resulting
-				combined string after the append operation.
-	\param[in]  source - Source string to be appended to the destination string.
-	\return	     The new concatenated string. 
-	*/
-	LPWSTR AppendString (LPWSTR dest, LPCWSTR source);
+    /**
+     * @brief Append a wide string to another, growing buffer as needed
+     * @param dest Destination string (address of pointer)
+     * @param source Source string to append
+     * @return New concatenated string pointer
+     */
+    LPWSTR AppendString(LPWSTR dest, LPCWSTR source);
 
-	/*! Return calling module by address. */
-	HMODULE GetCallingModule(UINT_PTR pCaller);
+    /**
+     * @brief Get calling module by address
+     * @param pCaller Caller address
+     * @return Module handle
+     */
+    HMODULE GetCallingModule(UINT_PTR pCaller);
 
-	void OutDebugStrW (LPCWSTR format, ...);
-	void OutDebugStrA (LPCSTR format, ...);
+    /**
+     * @brief Output debug string (wide character version)
+     * @param format Format string
+     * @param ... Format arguments
+     */
+    void OutDebugStrW(LPCWSTR format, ...);
+
+    /**
+     * @brief Output debug string (ANSI version)
+     * @param format Format string
+     * @param ... Format arguments
+     */
+    void OutDebugStrA(LPCSTR format, ...);
 
 #ifdef UNICODE
 #define OutDebugStr OutDebugStrW
 #else
 #define OutDebugStr OutDebugStrA
-#endif //UNICODE
+#endif // UNICODE
 
 #ifdef _DEBUG
-#define DbgTrace(...)  //OutDebugStr(__VA_ARGS__) //open while you need
+#define DbgTrace(...)  // OutDebugStr(__VA_ARGS__) // Enable when needed
 #else
-#define DbgTrace(...)  
+#define DbgTrace(...)
 #endif
 
-};
+} // namespace Utility
 
-#endif	// _UTILITY_H_
+#endif // _UTILITY_H_
