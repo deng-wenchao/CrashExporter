@@ -1,162 +1,196 @@
-
 /*! \file  ScreenCap.h
-*  \brief  provide a way to capture current screen shot.
+*  \brief  Desktop screenshot capture functionality
 */
 
 #ifndef __SCREENCAP_H__
 #define __SCREENCAP_H__
 
-#include "stdafx.h"
+#include <windows.h>
+#include <atlstr.h>
+#include <atlrect.h>
 #include <vector>
+#include <ctime>
 
 extern "C" {
 #include "png.h"
 }
 
-/*!
-\struct WindowInfo 
-\brief
-	Window information
-*/
+/**
+ * @struct WindowInfo
+ * @brief Information about a window
+ */
 struct WindowInfo
 {
-    CString m_sTitle; //!< Window title
-    CRect m_rcWnd;    //!< Window rect
-    DWORD dwStyle;
-    DWORD dwExStyle;
+    CString m_sTitle;   //!< Window title
+    CRect m_rcWnd;      //!< Window rectangle
+    DWORD dwStyle;      //!< Window style
+    DWORD dwExStyle;    //!< Extended window style
 };
 
-/*!
-\struct MonitorInfo 
-\brief
-	Monitor info
-*/
+/**
+ * @struct MonitorInfo
+ * @brief Information about a monitor
+ */
 struct MonitorInfo
 {
-    CString m_sDeviceID; //!< Device ID
-    CRect m_rcMonitor;   //!< Monitor rectangle in screen coordinates
-    CString m_sFileName; //!< Image file name corresponding to this monitor
+    CString m_sDeviceID;    //!< Device identifier
+    CRect m_rcMonitor;      //!< Monitor rectangle in screen coordinates
+    CString m_sFileName;    //!< Output image filename
 };
 
-/*!
-\struct ScreenshotInfo 
-\brief
-	Desktop screen shot info
-*/
+/**
+ * @struct ScreenshotInfo
+ * @brief Complete screenshot capture information
+ */
 struct ScreenshotInfo
 {
-	// Constructor
-    ScreenshotInfo()
-    {
-        m_bValid = FALSE;
-    }
+    ScreenshotInfo() : m_bValid(FALSE), m_CreateTime(0) {}
 
-    BOOL	m_bValid;				//!< If TRUE, this structure's fields are valid.
-	time_t	m_CreateTime;			//!< Time of screenshot capture.
-    CRect	m_rcVirtualScreen;		//!< Coordinates of virtual screen rectangle.
-    std::vector<MonitorInfo>	m_aMonitors;	//!< The list of monitors captured.
-    std::vector<WindowInfo>		m_aWindows;		//!< The list of windows captured.	
+    BOOL m_bValid;                      //!< TRUE if structure is valid
+    time_t m_CreateTime;                //!< Capture timestamp
+    CRect m_rcVirtualScreen;            //!< Virtual screen coordinates
+    std::vector<MonitorInfo> m_aMonitors;   //!< Captured monitors
+    std::vector<WindowInfo> m_aWindows;     //!< Captured windows
 };
 
-/*!
-\enum SCREENSHOT_TYPE 
-\brief
-	Screenshot type
-*/
+/**
+ * @enum SCREENSHOT_TYPE
+ * @brief Types of screenshots
+ */
 enum SCREENSHOT_TYPE
 {
-	SCREENSHOT_TYPE_VIRTUAL_SCREEN      = 0, //!< Screenshot of entire desktop.
-	SCREENSHOT_TYPE_MAIN_WINDOW         = 1, //!< Screenshot of given process' main window.
-	SCREENSHOT_TYPE_ALL_PROCESS_WINDOWS = 2  //!< Screenshot of all process windows.
+    SCREENSHOT_TYPE_VIRTUAL_SCREEN = 0,       //!< Entire virtual desktop
+    SCREENSHOT_TYPE_MAIN_WINDOW = 1,          //!< Main window of process
+    SCREENSHOT_TYPE_ALL_PROCESS_WINDOWS = 2   //!< All windows of process
 };
 
-/*!
-\class CScreenCapture 
-\brief
-	Desktop screenshot capture
-*/
+/**
+ * @class CScreenCapture
+ * @brief Captures desktop screenshots and saves as PNG files
+ */
 class CScreenCapture
 {
 public:
-
-    // Constructor.
     CScreenCapture();
-
-	// Destructor.
     ~CScreenCapture();
-	
-	/*!
-	\brief
-		Takes desktop screenshot and returns information about it.
-	*/
-	BOOL TakeDesktopScreenshot(	
-			LPCTSTR szSaveToDir,
-			ScreenshotInfo& ssi, 
-			SCREENSHOT_TYPE type=SCREENSHOT_TYPE_VIRTUAL_SCREEN, 
-			DWORD dwProcessId = 0, 
-			BOOL bGrayscale=FALSE,
-			int nIdStartFrom=0);
+
+    // Disable copy operations
+    CScreenCapture(const CScreenCapture&) = delete;
+    CScreenCapture& operator=(const CScreenCapture&) = delete;
+
+    /**
+     * @brief Take a desktop screenshot
+     * @param szSaveToDir Directory to save images
+     * @param ssi Output: screenshot information
+     * @param type Type of screenshot to take
+     * @param dwProcessId Process ID (for window screenshots)
+     * @param bGrayscale Create grayscale image
+     * @param nIdStartFrom Starting ID for filenames
+     * @return TRUE on success
+     */
+    BOOL TakeDesktopScreenshot(LPCTSTR szSaveToDir,
+                               ScreenshotInfo& ssi,
+                               SCREENSHOT_TYPE type = SCREENSHOT_TYPE_VIRTUAL_SCREEN,
+                               DWORD dwProcessId = 0,
+                               BOOL bGrayscale = FALSE,
+                               int nIdStartFrom = 0);
 
 private:
-
-	/*! Returns current virtual screen rectangle */
+    /**
+     * @brief Get virtual screen rectangle
+     * @param rcScreen Output: screen rectangle
+     */
     void GetScreenRect(LPRECT rcScreen);
 
-    /*! Returns an array of visible windows for the specified process or 
-     the main window of the process.  */
-    BOOL FindWindows(DWORD dwProcessId, BOOL bAllProcessWindows, std::vector<WindowInfo>* paWindows);
+    /**
+     * @brief Find visible windows for a process
+     * @param dwProcessId Process ID
+     * @param bAllProcessWindows TRUE to find all windows, FALSE for main window only
+     * @param paWindows Output: list of windows
+     * @return TRUE on success
+     */
+    BOOL FindWindows(DWORD dwProcessId, 
+                     BOOL bAllProcessWindows, 
+                     std::vector<WindowInfo>* paWindows);
 
-    /*! Captures the specified screen area and returns the list of image files */
-    BOOL CaptureScreenRect(
-        std::vector<CRect> arcCapture, 
-        CString sSaveDirName, 
-        int nIdStartFrom, 
-        BOOL bGrayscale,
-        std::vector<MonitorInfo>& monitor_list);
+    /**
+     * @brief Capture screen rectangles and save as images
+     * @param arcCapture Rectangles to capture
+     * @param sSaveDirName Directory to save images
+     * @param nIdStartFrom Starting ID for filenames
+     * @param bGrayscale Create grayscale images
+     * @param monitor_list Output: list of captured monitors
+     * @return TRUE on success
+     */
+    BOOL CaptureScreenRect(std::vector<CRect> arcCapture,
+                          CString sSaveDirName,
+                          int nIdStartFrom,
+                          BOOL bGrayscale,
+                          std::vector<MonitorInfo>& monitor_list);
 
-	/*! Monitor enumeration callback. */
-	static BOOL CALLBACK EnumMonitorsProc(HMONITOR hMonitor, HDC /*hdcMonitor*/, LPRECT lprcMonitor, LPARAM dwData);
+    /**
+     * @brief Monitor enumeration callback
+     */
+    static BOOL CALLBACK EnumMonitorsProc(HMONITOR hMonitor,
+                                          HDC hdcMonitor,
+                                          LPRECT lprcMonitor,
+                                          LPARAM dwData);
 
-	/*! Window enumeration callback. */
-	static BOOL CALLBACK EnumWndProc(HWND hWnd, LPARAM lParam);
+    /**
+     * @brief Window enumeration callback
+     */
+    static BOOL CALLBACK EnumWndProc(HWND hWnd, LPARAM lParam);
 
-    /* PNG management functions */
+    // === PNG Management Functions ===
 
-    /*! Initializes PNG file header */
+    /**
+     * @brief Initialize PNG file writer
+     * @param nWidth Image width
+     * @param nHeight Image height
+     * @param bGrayscale Grayscale mode
+     * @param sFileName Output filename
+     * @return TRUE on success
+     */
     BOOL PngInit(int nWidth, int nHeight, BOOL bGrayscale, CString sFileName);
 
-    /*! Writes a scan line to the PNG file */
+    /**
+     * @brief Write a scan line to PNG
+     * @param pRow Row data
+     * @param nRowLen Row length
+     * @param bGrayscale Grayscale mode
+     * @return TRUE on success
+     */
     BOOL PngWriteRow(LPBYTE pRow, int nRowLen, BOOL bGrayscale);
 
-    // Closes PNG file
+    /**
+     * @brief Finalize and close PNG file
+     * @return TRUE on success
+     */
     BOOL PngFinalize();
 
-	/*!
-	\struct FindWindowData 
-	\brief
-		The following structure stores window find data.
-	*/
-	struct FindWindowData
-	{
-		DWORD	dwProcessId;					//!< Process ID.
-		BOOL	bAllProcessWindows;             //!< If TRUE, finds all process windows, else only the main one
-		std::vector<WindowInfo>* paWindows;		//!< Output array of window handles
-	};
+    /**
+     * @struct FindWindowData
+     * @brief Data for window enumeration
+     */
+    struct FindWindowData
+    {
+        DWORD dwProcessId;                    //!< Target process ID
+        BOOL bAllProcessWindows;              //!< Find all windows or just main
+        std::vector<WindowInfo>* paWindows;   //!< Output window list
+    };
 
-    /* Internal member variables. */
+    // === Member Variables ===
 
-    CPoint				m_ptCursorPos;      //!< Current mouse cursor pos
-    std::vector<CRect>	m_arcCapture;		//!< Array of capture rectangles
-    CURSORINFO			m_CursorInfo;       //!< Cursor info  
-    int					m_nIdStartFrom;     //!< An ID for the current screenshot image 
-    CString				m_sSaveDirName;     //!< Directory name to save screenshots toy
-    BOOL				m_bGrayscale;       //!< Create grayscale image or not
-    FILE*				m_fp;               //!< Handle to the file
-    png_structp			m_png_ptr;          //!< libpng stuff
-    png_infop			m_info_ptr;         //!< libpng stuff
-    std::vector<MonitorInfo> m_monitor_list; //!< The list of monitor devices   
+    CPoint m_ptCursorPos;                 //!< Cursor position
+    std::vector<CRect> m_arcCapture;      //!< Rectangles to capture
+    CURSORINFO m_CursorInfo;              //!< Cursor information
+    int m_nIdStartFrom;                   //!< Starting image ID
+    CString m_sSaveDirName;               //!< Save directory
+    BOOL m_bGrayscale;                    //!< Grayscale mode flag
+    FILE* m_fp;                           //!< PNG file handle
+    png_structp m_png_ptr;                //!< libpng write struct
+    png_infop m_info_ptr;                 //!< libpng info struct
+    std::vector<MonitorInfo> m_monitor_list; //!< Captured monitors
 };
 
-#endif //__SCREENCAP_H__
-
-
+#endif // __SCREENCAP_H__

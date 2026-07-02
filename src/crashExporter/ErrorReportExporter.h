@@ -1,112 +1,190 @@
-
 /*! \file  ErrorReportExporter.h
-*  \brief  Export Crash Error information, eg. minidump, stack walk, Screenshot...
+*  \brief  Export crash error information (minidump, stack walk, screenshot, etc.)
 */
 
 #pragma once
-#include "AssyncNotification.h"
-#include "CrashInfoReader.h"
 
-/*!
-\class CErrorReportExporter 
-\brief
-	The main class that collects crash report files. 
-*/
+#include <windows.h>
+#include <atlstr.h>
+#include <vector>
+
+// Forward declarations
+class AssyncNotification;
+class CCrashInfoReader;
+
+/**
+ * @class CErrorReportExporter
+ * @brief Main class for collecting and exporting crash report files
+ */
 class CErrorReportExporter
 {
 public:
+    /**
+     * @brief Action type enumeration
+     */
+    enum ActionType
+    {
+        COLLECT_CRASH_INFO = 0x01,  //!< Collect crash info
+        RESTART_APP        = 0x02   //!< Restart crashed application
+    };
 
-	// Constructor.
-	CErrorReportExporter();
+    /**
+     * @brief Constructor
+     */
+    CErrorReportExporter();
 
-	// Destructor.
-	virtual ~CErrorReportExporter();
+    /**
+     * @brief Destructor - cleans up resources
+     */
+    virtual ~CErrorReportExporter();
 
-	/*! Returns singleton of this class. */
-	static CErrorReportExporter* GetInstance();
+    // Disable copy operations
+    CErrorReportExporter(const CErrorReportExporter&) = delete;
+    CErrorReportExporter& operator=(const CErrorReportExporter&) = delete;
 
-	/*! Performs initialization. */	
-	BOOL Init(LPCTSTR szFileMappingName);
-		
-	/*! Cleans up all temp files and does other finalizing work. */
-	BOOL Finalize();
+    /**
+     * @brief Get singleton instance
+     * @return Pointer to singleton instance
+     */
+    static CErrorReportExporter* GetInstance();
 
-	/*! Returns pointer to object containing crash information. */
-	CCrashInfoReader* GetCrashInfo() { return &m_CrashInfo; }
+    /**
+     * @brief Initialize with shared memory name
+     * @param szFileMappingName Name of shared memory mapping
+     * @return TRUE on success
+     */
+    BOOL Init(LPCTSTR szFileMappingName);
 
-	/*! Return name of the directory where error report files are located. */
-	CString GetErrorReportDir() { return m_sErrorReportDirName; }
+    /**
+     * @brief Clean up temporary files and finalize
+     * @return TRUE on success
+     */
+    BOOL Finalize();
 
-	/*! Blocks until an assync operation finishes. */
-	void WaitForCompletion();
+    /**
+     * @brief Get crash information reader
+     * @return Pointer to crash info reader
+     */
+    CCrashInfoReader* GetCrashInfo() { return &m_CrashInfo; }
 
-	/*! Gets current operation status. */
-	void GetCurOpStatus(int& nProgressPct, std::vector<CString>& msg_log);
+    /**
+     * @brief Get error report directory path
+     * @return Directory path
+     */
+    CString GetErrorReportDir() const { return m_sErrorReportDirName; }
 
-	/*! Exports crash report to disc. */
-	void ExportReport();
-	
-	// This method finds and terminates all instances of crashExporter.exe process.
-	static int TerminateAllcrashExporterProcesses();
-		
+    /**
+     * @brief Wait for async operation to complete
+     */
+    void WaitForCompletion();
+
+    /**
+     * @brief Get current operation status
+     * @param nProgressPct Output: progress percentage
+     * @param msg_log Output: log messages
+     */
+    void GetCurOpStatus(int& nProgressPct, std::vector<CString>& msg_log);
+
+    /**
+     * @brief Export crash report to disk
+     */
+    void ExportReport();
+
+    /**
+     * @brief Terminate all running crashExporter.exe processes
+     * @return 0 on success
+     */
+    static int TerminateAllcrashExporterProcesses();
+
 private:
+    /**
+     * @brief Perform work synchronously
+     * @param Action Action to perform
+     * @return TRUE on success
+     */
+    BOOL DoWork(int Action);
 
-	/*! This method performs an action or several actions. */
-	BOOL DoWork(int Action);
-		
-	/*! Worker thread proc. */
-	static DWORD WINAPI WorkerThread(LPVOID lpParam);  
+    /**
+     * @brief Worker thread procedure
+     * @param lpParam Thread parameter (this pointer)
+     * @return Exit code
+     */
+    static DWORD WINAPI WorkerThread(LPVOID lpParam);
 
-	/*! Runs an action or several actions in assync mode. */
-	BOOL DoWorkAssync(int Action);
-		
-	/*! Takes desktop screenshot. */
-	BOOL TakeDesktopScreenshot();
+    /**
+     * @brief Run action(s) asynchronously
+     * @param Action Action to perform
+     * @return TRUE on success
+     */
+    BOOL DoWorkAssync(int Action);
 
-	/*! Creates crash dump file. */
-	BOOL CreateMiniDump();  
+    /**
+     * @brief Take desktop screenshot
+     * @return TRUE on success
+     */
+    BOOL TakeDesktopScreenshot();
 
-	/*! Create CrashInfo. */
-	BOOL CreateCrashInfo();
+    /**
+     * @brief Create minidump file
+     * @return TRUE on success
+     */
+    BOOL CreateMiniDump();
 
-	/*! Return CrashInfo string. */
-	CString BuildCrashInfo();
+    /**
+     * @brief Create crash info text file
+     * @return TRUE on success
+     */
+    BOOL CreateCrashInfo();
 
-	/*! This method is used to have the current process be able to call MiniDumpWriteDump. */
-	BOOL SetDumpPrivileges();
+    /**
+     * @brief Build crash info string
+     * @return Crash info text
+     */
+    CString BuildCrashInfo();
 
-	/*! Minidump callback. */
-	static BOOL CALLBACK MiniDumpCallback(PVOID CallbackParam, PMINIDUMP_CALLBACK_INPUT CallbackInput,
-		PMINIDUMP_CALLBACK_OUTPUT CallbackOutput); 
+    /**
+     * @brief Set privileges required for MiniDumpWriteDump
+     * @return TRUE on success
+     */
+    BOOL SetDumpPrivileges();
 
-	/*! Minidump callback. */
-	BOOL OnMinidumpProgress(const PMINIDUMP_CALLBACK_INPUT CallbackInput,
-		PMINIDUMP_CALLBACK_OUTPUT CallbackOutput);
+    /**
+     * @brief Minidump callback function
+     * @param CallbackParam User parameter
+     * @param CallbackInput Callback input data
+     * @param CallbackOutput Callback output data
+     * @return TRUE to continue
+     */
+    static BOOL CALLBACK MiniDumpCallback(PVOID CallbackParam,
+                                          PMINIDUMP_CALLBACK_INPUT CallbackInput,
+                                          PMINIDUMP_CALLBACK_OUTPUT CallbackOutput);
 
-	/*! Restarts the application. */
-	BOOL RestartApp();
+    /**
+     * @brief Handle minidump progress
+     * @param CallbackInput Callback input data
+     * @param CallbackOutput Callback output data
+     * @return TRUE to continue
+     */
+    BOOL OnMinidumpProgress(PMINIDUMP_CALLBACK_INPUT CallbackInput,
+                           PMINIDUMP_CALLBACK_OUTPUT CallbackOutput);
 
-	/*! Unblocks parent process. */
-	void UnblockParentProcess();
+    /**
+     * @brief Restart the crashed application
+     * @return TRUE on success
+     */
+    BOOL RestartApp();
 
-	// Internal variables
-	static CErrorReportExporter* m_pInstance;	//!< Singleton
-	CCrashInfoReader			m_CrashInfo;	//!< Contains crash information.
-	HANDLE						m_hThread;		//!< Handle to the worker thread.
-	AssyncNotification			m_Assync;       //!< Used for communication with the main thread.
-	int							m_Action;       //!< Current assynchronous action.
-	CString						m_sErrorReportDirName; //!< Name of the directory where error report files are located.
+    /**
+     * @brief Unblock parent process
+     */
+    void UnblockParentProcess();
 
-	/*!
-	\enum ActionType 
-	\brief
-		Action type. 
-	*/
-	enum ActionType  
-	{
-		COLLECT_CRASH_INFO  = 0x01, //!< Crash info should be collected.
-		RESTART_APP         = 0x02, //!< Crashed app should be restarted.
-	};
+    // === Member Variables ===
+
+    static CErrorReportExporter* m_pInstance;  //!< Singleton instance
+    CCrashInfoReader m_CrashInfo;               //!< Crash information
+    HANDLE m_hThread;                           //!< Worker thread handle
+    AssyncNotification m_Assync;                //!< Async notification
+    int m_Action;                               //!< Current action
+    CString m_sErrorReportDirName;              //!< Error report directory
 };
-
-
