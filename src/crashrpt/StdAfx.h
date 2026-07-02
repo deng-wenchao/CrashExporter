@@ -9,6 +9,8 @@
 #define NOMINMAX
 
 #include <windows.h>
+#define min(a,b) (((a) < (b)) ? (a) : (b))
+#define max(a,b) (((a) > (b)) ? (a) : (b))
 #include <atldef.h>
 #include <atlbase.h>
 #include <atlapp.h>

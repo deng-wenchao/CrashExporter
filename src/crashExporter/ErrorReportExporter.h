@@ -5,12 +5,9 @@
 #pragma once
 
 #include <windows.h>
-#include <atlstr.h>
 #include <vector>
-
-// Forward declarations
-class AssyncNotification;
-class CCrashInfoReader;
+#include "AssyncNotification.h"
+#include "CrashInfoReader.h"
 
 /**
  * @class CErrorReportExporter

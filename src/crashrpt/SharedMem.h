@@ -5,16 +5,9 @@
 #pragma once
 
 #include <windows.h>
-#include <atlstr.h>
 #include <map>
 #include <cstdint>
-
-// Forward declaration
-#ifndef _MINIDUMP_API_
-typedef enum _MINIDUMP_TYPE {
-    MiniDumpNormal = 0x00000000,
-} MINIDUMP_TYPE;
-#endif
+#include <dbghelp.h>
 
 #ifndef _EXCEPTION_POINTERS_DEFINED
 struct _EXCEPTION_POINTERS;

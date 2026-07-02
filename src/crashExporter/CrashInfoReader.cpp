@@ -34,10 +34,10 @@ int CCrashInfoReader::Init(LPCTSTR szFileMappingName)
 	strconv_t strconv;
 
 	// Init shared memory
-	if(!m_SharedMem.IsInitialized())
+	if(!m_SharedMem->IsInitialized())
 	{
 		// Init shared memory
-		BOOL bInitMem = m_SharedMem.Init(szFileMappingName, TRUE, 0);
+		BOOL bInitMem = m_SharedMem->Init(szFileMappingName, TRUE, 0);
 		if(!bInitMem)
 		{
 			OutputErrorStr(_T("Error initializing shared memory."));
@@ -46,7 +46,7 @@ int CCrashInfoReader::Init(LPCTSTR szFileMappingName)
 	}
 
 	// Unpack crash description from shared memory
-	m_pCrashDesc = (CRASH_DESCRIPTION*)m_SharedMem.CreateView(0, sizeof(CRASH_DESCRIPTION));
+	m_pCrashDesc = (CRASH_DESCRIPTION*)m_SharedMem->CreateView(0, sizeof(CRASH_DESCRIPTION));
 
 	int nUnpack = UnpackCrashDescription();
 	if(0 != nUnpack)
@@ -111,7 +111,7 @@ int CCrashInfoReader::UnpackCrashDescription()
 
 int CCrashInfoReader::UnpackString(DWORD dwOffset, CString& str)
 {
-	STRING_DESC* pStrDesc = (STRING_DESC*)m_SharedMem.CreateView(dwOffset, sizeof(STRING_DESC));
+	STRING_DESC* pStrDesc = (STRING_DESC*)m_SharedMem->CreateView(dwOffset, sizeof(STRING_DESC));
 	if(0 != memcmp(pStrDesc, "STR", 3))
 		return 1;
 
@@ -121,10 +121,10 @@ int CCrashInfoReader::UnpackString(DWORD dwOffset, CString& str)
 
 	WORD wStrLen = wLength - sizeof(STRING_DESC);
 
-	m_SharedMem.DestroyView((LPBYTE)pStrDesc);
-	LPBYTE pStrData = m_SharedMem.CreateView(dwOffset+sizeof(STRING_DESC), wStrLen);
+	m_SharedMem->DestroyView((LPBYTE)pStrDesc);
+	LPBYTE pStrData = m_SharedMem->CreateView(dwOffset+sizeof(STRING_DESC), wStrLen);
 	str = CString((LPCTSTR)pStrData, wStrLen/sizeof(TCHAR));
-	m_SharedMem.DestroyView(pStrData);
+	m_SharedMem->DestroyView(pStrData);
 
 	return 0;
 }

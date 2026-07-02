@@ -6,7 +6,6 @@
 #define _UTILITY_H_
 
 #include <windows.h>
-#include <atlstr.h>
 #include <cstdint>
 
 /**

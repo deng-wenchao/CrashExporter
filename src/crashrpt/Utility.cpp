@@ -179,7 +179,7 @@ CString Utility::FormatErrorMsg(DWORD dwErrorCode)
 
 // Creates a folder. If some intermediate folders in the path do not exist,
 // it creates them.
-BOOL Utility::CreateFolder(CString sFolderName)
+BOOL Utility::CreateFolder(const CString& sFolderName)
 {  
 	CString sIntermediateFolder;
 

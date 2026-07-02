@@ -6,8 +6,6 @@
 #define __SCREENCAP_H__
 
 #include <windows.h>
-#include <atlstr.h>
-#include <atlrect.h>
 #include <vector>
 #include <ctime>
 

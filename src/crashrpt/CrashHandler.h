@@ -5,7 +5,6 @@
 #pragma once
 
 #include <windows.h>
-#include <atlstr.h>
 #include <map>
 #include <dbghelp.h>
 
@@ -214,6 +213,7 @@ private:
     MINIDUMP_TYPE m_MinidumpType;   //!< Minidump type
     CString m_sImageName;           //!< Process image name
     CString m_sRestartCmdLine;      //!< Restart command line
+    CString m_sCrashGUID;           //!< Crash GUID
 
     // Screenshot settings
     BOOL m_bAddScreenshot;          //!< Include screenshot flag

@@ -241,22 +241,24 @@ CRASH_DESCRIPTION* CCrashHandler::PackCrashInfoIntoSharedMem(CSharedMem* pShared
 	m_pTmpCrashDesc->m_dwImageNameOffs = PackString(m_sImageName);
 	m_pTmpCrashDesc->m_dwPathToDebugHelpDllOffs = PackString(m_sPathToDebugHelpDll);
 	m_pTmpCrashDesc->m_dwRestartCmdLineOffs = PackString(m_sRestartCmdLine);
+	m_pTmpCrashDesc->m_dwCrashGUIDOffs = PackString(m_sCrashGUID);
 
 	return m_pTmpCrashDesc;
 }
 
 // Packs a string to shared memory
-DWORD CCrashHandler::PackString(CString str)
+DWORD CCrashHandler::PackString(const CString& str)
 {
 	DWORD dwTotalSize = m_pTmpCrashDesc->m_dwTotalSize;
-	int nStrLen = str.GetLength()*sizeof(TCHAR);
+	CString strCopy = str;
+	int nStrLen = strCopy.GetLength()*sizeof(TCHAR);
 	WORD wLength = (WORD)(sizeof(STRING_DESC)+nStrLen);
 
 	LPBYTE pView = m_pTmpSharedMem->CreateView(dwTotalSize, wLength);  
 	STRING_DESC* pStrDesc = (STRING_DESC*)pView;
 	memcpy(pStrDesc->m_uchMagic, "STR", 3);
 	pStrDesc->m_wSize = wLength;
-	memcpy(pView+sizeof(STRING_DESC), str.GetBuffer(0), nStrLen); 
+	memcpy(pView+sizeof(STRING_DESC), strCopy.GetBuffer(0), nStrLen); 
 
 	m_pTmpCrashDesc->m_dwTotalSize += wLength;
 
@@ -1348,8 +1350,5 @@ void CCrashHandler::SigtermHandler(int)
 	}
 }
 
-DWORD CCrashHandler::GetFlags()
-{
-	return m_dwFlags;
-}
+
 
